@@ -1,0 +1,18 @@
+{
+  "browsers": [
+    {
+      "browser_name": "chrome",
+      "major_browser_version": "",
+      "browser_version": "154.0.8037.57",
+      "browser_ttl": 1790477862
+    }
+  ],
+  "drivers": [
+    {
+      "major_browser_version": "154",
+      "driver_name": "chromedriver",
+      "driver_version": "154.0.8037.57",
+      "driver_ttl": 1790477491
+    }
+  ]
+}
