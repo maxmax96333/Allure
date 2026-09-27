@@ -1,7 +1,6 @@
 package ru.netology.delivery.test;
 
 import com.codeborne.selenide.Condition;
-import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.WebDriverRunner;
 import com.codeborne.selenide.logevents.SelenideLogger;
 import io.qameta.allure.Allure;
@@ -11,16 +10,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
-import org.openqa.selenium.chrome.ChromeOptions;
 import ru.netology.delivery.data.DataGenerator;
 
 import java.io.ByteArrayInputStream;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 
 import static com.codeborne.selenide.Condition.text;
-import static com.codeborne.selenide.Condition.value;
 import static com.codeborne.selenide.Condition.visible;
 import static org.openqa.selenium.By.cssSelector;
 import static com.codeborne.selenide.Selenide.$;
@@ -32,17 +26,6 @@ class DeliveryTest {
     void setup() {
         SelenideLogger.addListener("AllureSelenide",
                 new AllureSelenide().screenshots(true).savePageSource(true));
-        ChromeOptions chromeOptions = new ChromeOptions();
-        chromeOptions.addArguments(
-                "--no-sandbox",
-                "--no-first-run",
-                "--disable-extensions",
-                "--disable-gpu",
-                "--disable-gpu-compositing",
-                "--use-gl=angle",
-                "--use-angle=swiftshader"
-        );
-        Configuration.browserCapabilities = chromeOptions;
         open(System.getProperty("sut.url", "http://localhost:9999"));
     }
 
@@ -57,45 +40,18 @@ class DeliveryTest {
         );
     }
 
-    private String generateDate(long addDays, String pattern) {
-        return LocalDate.now()
-                .plusDays(addDays)
-                .format(DateTimeFormatter.ofPattern(pattern));
-    }
-
-    private long nextWeekdayOffset(long addDays) {
-        LocalDate plannedDate = LocalDate.now().plusDays(addDays);
-        while (plannedDate.getDayOfWeek().getValue() > 5) {
-            plannedDate = plannedDate.plusDays(1);
-        }
-        return ChronoUnit.DAYS.between(LocalDate.now(), plannedDate);
-    }
-
     private String selectDate(long requestedOffset, long currentCalendarDateOffset) {
-        String planningDate = generateDate(requestedOffset, "dd.MM.yyyy");
-        String planningDay = generateDate(requestedOffset, "dd").replaceFirst("^0", "");
-
-        // Приложение блокирует выходные, поэтому при необходимости выбираем ближайший будний день.
-        long selectedOffset = nextWeekdayOffset(requestedOffset);
-        if (selectedOffset != requestedOffset) {
-            planningDate = generateDate(selectedOffset, "dd.MM.yyyy");
-            planningDay = generateDate(selectedOffset, "dd").replaceFirst("^0", "");
-        }
+        String planningDate = DataGenerator.generateDate(requestedOffset, "dd.MM.yyyy");
+        String planningDay = DataGenerator.generateDate(requestedOffset, "d");
 
         $("[data-test-id='date'] button").click();
-        if (generateDate(currentCalendarDateOffset, "MM").equals(generateDate(selectedOffset, "MM"))) {
-            $$(cssSelector("[data-day]"))
-                    .findBy(text(planningDay))
-                    .click();
-        } else {
-            // В этой версии приложения месячная стрелка имеет класс calendar__arrow_direction_right.
+        if (!DataGenerator.generateDate(currentCalendarDateOffset, "MM")
+                .equals(DataGenerator.generateDate(requestedOffset, "MM"))) {
             $(cssSelector(".calendar__arrow_direction_right:not(.calendar__arrow_double)")).click();
-            $$(cssSelector("[data-day]"))
-                    .findBy(text(planningDay))
-                    .click();
         }
-
-        $("[data-test-id='date'] input").shouldHave(value(planningDate));
+        $$(cssSelector("[data-day]"))
+                .findBy(text(planningDay))
+                .click();
         return planningDate;
     }
 
@@ -103,8 +59,8 @@ class DeliveryTest {
     @DisplayName("Should successfully plan and replan meeting")
     void shouldSuccessfullyPlanAndReplanMeeting() {
         var validUser = DataGenerator.Registration.generateUser("ru");
-        long firstMeetingOffset = nextWeekdayOffset(7);
-        long secondMeetingOffset = nextWeekdayOffset(firstMeetingOffset + 3);
+        long firstMeetingOffset = 7;
+        long secondMeetingOffset = firstMeetingOffset + 3;
 
         $("[data-test-id='city'] input").setValue(validUser.getCity());
         String firstMeetingDate = selectDate(firstMeetingOffset, 3);

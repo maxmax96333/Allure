@@ -13,10 +13,10 @@ public class DataGenerator {
     private DataGenerator() {
     }
 
-    public static String generateDate(int shift) {
+    public static String generateDate(long shift, String pattern) {
         return LocalDate.now()
                 .plusDays(shift)
-                .format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+                .format(DateTimeFormatter.ofPattern(pattern));
     }
 
     public static String generateCity(Faker faker) {
